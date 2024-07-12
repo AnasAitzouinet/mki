@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE "Clients" ADD COLUMN     "userId" TEXT,
+ALTER COLUMN "status" SET DEFAULT 'LEADS',
+ALTER COLUMN "montant" SET DEFAULT 0,
+ALTER COLUMN "recallDate" SET DATA TYPE TEXT,
+ALTER COLUMN "paimentStatus" SET DEFAULT 'WAITING';
+
+-- AddForeignKey
+ALTER TABLE "Clients" ADD CONSTRAINT "Clients_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;

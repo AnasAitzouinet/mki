@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @default(cuid())
+  email    String  @unique
+  name     String?
+  password String
+  role     String
+
+  clientList Clients[] @relation("UserClients")
+  factures   Factures[] @relation("UserFactures")
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Clients {
+  id                String         @id @default(cuid())
+  creationDate      String?
+  modificationDate  String?
+  qualificationDate String?
+  full_name         String?
+  email             String?
+  phone             String?
+  status            Status?        @default(LEADS)
+  comments          String?
+  montant           Float?         @default(0)
+  recallDate        String?
+  paimentStatus     PaimentStatus? @default(WAITING)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  factures Factures[] @relation("ClientFactures")
+  user     User?      @relation("UserClients", fields: [userId], references: [id])
+  userId   String?
+}
+
+model Factures {
+  id            String   @id @default(cuid())
+  dateDecheance DateTime
+  montant       Float
+
+  paiment_Link String?
+  paiment_PDF  String?
+  invoice_id   String?
+
+  client    Clients  @relation(fields: [clientId], references: [id], name: "ClientFactures")
+  clientId  String
+
+  user      User     @relation(fields: [userId], references: [id], name: "UserFactures")
+  userId    String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PaimentStatus {
+  WAITING
+  PAID
+  NOT_PAID
+}
+
+enum Status {
+  LEADS
+  NRP
+  MAIL_RELANCE_MAIL
+  MAIL_RELANCE_TEL
+  ANNULER
+  WAITING_FOR_JUSTIFICATION
+  WAITING_FOR_PAYMENT
+  TO_BE_RECALLED
+  VALIDATED
+}
