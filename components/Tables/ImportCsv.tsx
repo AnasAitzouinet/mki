@@ -47,15 +47,15 @@ export default function ImportCsv() {
             Papa.parse(values.file, {
                 header: true,
                 complete: async (results) => {
+                    console.log("Parsed CSV:", results.data);
                     const contacts = results.data
                         .map((row: any) => ({
                             creationDate: row['Créé'] || row.creationDate,
                             email: row['Adresse e-mail'] || row.email,
                             full_name: row['Nom'] || row.full_name,
-                            phone: row['Téléphone'] || row.phone,
+                            phone: row['Téléphone'] ||row['Téléphone (recommandé)'] || row.phone,
                         }))
-                        .filter((contact: any) => contact.email && contact.full_name && contact.phone && contact.creationDate);
-
+                        .filter((contact: any) => contact.email && contact.full_name);
                     if (contacts.length === 0) {
                         setLoading(false);
                         return;
