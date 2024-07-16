@@ -369,7 +369,8 @@ export async function getFactures() {
                 modificationDate: facture.client.modificationDate,
                 dateDecheance: [facture.dateDecheance],
                 facturePdf: [facture.paiment_PDF]
-            }})
+            }
+        })
 
         console.log('Fetched Factures:', factures)
 
@@ -379,3 +380,58 @@ export async function getFactures() {
         return { success: false, message: 'Error sharing data', error }
     }
 }
+
+export async function getStatistics() {
+    const session = await getSession();
+
+    if (!session || !session.userId) {
+        throw new Error("Unauthorized");
+    }
+
+    try {
+        const isUser = await db.user.findUnique({
+            where: {
+                id: session.userId as string
+            }
+        });
+
+        if (!isUser) {
+            throw new Error("Unauthorized");
+        }
+
+        const data = await db.clients.groupBy({
+            by: ['status'],
+            _count: {
+                status: true
+            }
+        });
+        const Cards = [
+            { name: "Mail Relance (mail)", status: "MAIL_RELANCE_MAIL" },
+            { name: "Mail Relance (tel)", status: "MAIL_RELANCE_TEL" },
+            { name: "NRP", status: "NRP" },
+            { name: "Annuler", status: "ANNULER" },
+            { name: "A rappeler", status: "TO_BE_RECALLED" },
+            { name: "En attente de paiement", status: "WAITING_FOR_PAYMENT" },
+            { name: "En attente de justif", status: "WAITING_FOR_JUSTIF" },
+            { name: "Nombre de total (clients)", status: "TOTAL" },
+            { name: "Qualifié", status: "QUALIFIED" },
+            { name: "Production mensuelle", status: "MONTHLY_PRODUCTION" },
+            { name: "Validé", status: "VALIDATED" }
+        ];
+
+        const datas = Cards.map((card) => {
+            const countData = data.find((d) => d.status === card.status);
+            return {
+                name: card.name,
+                value: countData ? countData._count.status : 0
+                , status: card.status
+            };
+        });
+
+         return datas;
+    } catch (error) {
+        console.error(error);
+     }
+}
+
+

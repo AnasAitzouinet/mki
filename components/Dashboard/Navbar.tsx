@@ -14,6 +14,7 @@ import Link from "next/link"
 import { CircleUser, Menu, Package2 } from 'lucide-react'
 import ModeToggle from '../ModeToggle'
 import { IsAdmin, Logout } from '@/server/Auth'
+import { useRouter } from 'next/navigation'
 
 
 
@@ -46,6 +47,8 @@ const NavItems = [
 
 export default function Navbar() {
     const [isAdmin, setIsAdmin] = React.useState(false)
+    const router = useRouter()
+
     React.useEffect(() => {
         IsAdmin().then((res) => {
             setIsAdmin(res)
@@ -55,24 +58,22 @@ export default function Navbar() {
     return (
         <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
             <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:text-sm lg:gap-5">
-                <Link
-                    href="#"
+                <div
+                    onClick={() => router.push("/")}
                     className="flex items-center gap-2 text-lg font-semibold md:text-base"
                 >
                     <Package2 className="h-6 w-6" />
-                    <span className="sr-only">Acme Inc</span>
-                </Link>
+                    <span className="sr-only">The Call Crm</span>
+                </div>
                 {NavItems.map((item) => {
                     return (isAdmin && item.admin) || !item.admin ? (
                         <Button
                             key={item.name}
-                            variant="ghost" size="sm" className='group'>
-                            <Link
-                                href={item.href}
-                                className="text-muted-foreground group-hover:text-foreground"
-                            >
-                                {item.name}
-                            </Link>
+                            variant="ghost" size="sm"
+                            onClick={() => router.push(item.href)}
+                            className="text-muted-foreground hover:text-foreground"
+                        >
+                            {item.name}
                         </Button>
 
                     ) : null
@@ -91,22 +92,24 @@ export default function Navbar() {
                 </SheetTrigger>
                 <SheetContent side="left">
                     <nav className="grid gap-6 text-lg font-medium">
-                        <Link
-                            href="#"
+                        <div
+                            onClick={() => router.push("/")}
                             className="flex items-center gap-2 text-lg font-semibold"
                         >
                             <Package2 className="h-6 w-6" />
-                            <span className="sr-only">Acme Inc</span>
-                        </Link>
+                            <span className="sr-only">
+                                The Call Crm
+                            </span>
+                        </div>
                         {NavItems.map((item) => (
 
-                            <Link
-                                href={item.href}
+                            <div
+                                onClick={() => router.push(item.href)}
                                 key={item.name}
                                 className="text-muted-foreground hover:text-foreground"
                             >
                                 {item.name}
-                            </Link>
+                            </div>
 
                         ))}
                     </nav>
@@ -127,8 +130,8 @@ export default function Navbar() {
                         <DropdownMenuLabel>My Account</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                            onClick={async() => {
-                               await Logout()
+                            onClick={async () => {
+                                await Logout()
                             }}
                         >Logout</DropdownMenuItem>
                     </DropdownMenuContent>

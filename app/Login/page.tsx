@@ -30,12 +30,14 @@ import { Login } from "@/server/Auth";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { set } from "date-fns";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
     const { toast } = useToast()
     const [error, setError] = useState<string>("")
     const [success, setSuccess] = useState<string>("")
     const [loading, setLoading] = useState<boolean>(false)
+    const router = useRouter()
 
     const form = useForm<LoginSchemas>({
         resolver: zodResolver(LoginSchema),
@@ -56,8 +58,8 @@ export default function LoginForm() {
                     duration: 5000,
                     color: "success",
                 })
-                window.location.href = "/"
                 setLoading(false)
+                router.push("/")
             } else {
                 setError(res.message)
                 toast({

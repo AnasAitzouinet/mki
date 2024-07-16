@@ -39,7 +39,7 @@ export const CreateAccount = async (values: NewAccountSchemas) => {
 
 
 export const CreateAccountAdmin = async (values: NewAccountSchemas) => {
- 
+
     const validated = NewAccountSchema.parse(values)
     try {
         const user = await db.user.create({
@@ -72,14 +72,13 @@ export const Login = async (values: LoginSchemas) => {
         }
 
         const valid = await bcryptjs.compare(validated.password, user.password);
-        console.log(valid)
+
         if (!valid) {
             console.log("Login failed: Email or Password invalid");
             return { success: false, message: "Login failed: Email or Password invalid" };
         }
-
         await createSession(user.id as string, user.role);
-         return { success: true, message: "Login successful" };
+        return { success: true, message: "Login successful" };
     } catch (error) {
         return { success: false, message: "Login failed: Something Occured, try again later" };
     }

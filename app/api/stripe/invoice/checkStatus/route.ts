@@ -3,21 +3,22 @@ import { getSession } from "@/lib/session";
 import stripe from "@/lib/stripe";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
+
 
 export async function POST(req: Request) {
-    // const session = await getSession()
-    // if (!session || !session.userId) {
-    //     return new NextResponse("Unauthorized", { status: 401 })
-    // }
-    // const user = await db.user.findFirst({
-    //     where: {
-    //         id: session.userId
-    //     }
-    // })
-    // if (!user) {
-    //     return new NextResponse("Unauthorized", { status: 401 })
-    // }
+    const session = await getSession()
+    if (!session || !session.userId) {
+        return new NextResponse("Unauthorized", { status: 401 })
+    }
+    const user = await db.user.findFirst({
+        where: {
+            id: session.userId
+        }
+    })
+    if (!user) {
+        return new NextResponse("Unauthorized", { status: 401 })
+    }
+    
     try {
         const {
             inoviceId
