@@ -2,6 +2,7 @@
 import { Leads } from "@/components/Tables/Columns/Column";
 import db from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import stripe from "@/lib/stripe";
 import { CsvFileImportSchema } from "@/schemas";
 import { Clients, Status, User } from "@prisma/client";
 import * as z from "zod";
@@ -102,20 +103,30 @@ export async function editStatus(status: Status, id: string) {
                 id: session.userId as string
             }
         })
-
         if (!isUser) {
             throw new Error("Unauthorized")
         }
 
-        const data = await db.clients.update({
-            where: {
-                id,
-                userId: isUser.id
-            },
-            data: {
-                status
-            }
-        })
+        if (isUser.role === 'admin') {
+            const data = await db.clients.update({
+                where: {
+                    id
+                },
+                data: {
+                    status
+                }
+            })
+        } else {
+            const data = await db.clients.update({
+                where: {
+                    id,
+                    userId: isUser.id
+                },
+                data: {
+                    status
+                }
+            })
+        }
 
         return { success: true, message: 'Data updated successfully' }
     } catch (error) {
@@ -368,13 +379,53 @@ export async function getFactures() {
                 creationDate: facture.client.creationDate,
                 modificationDate: facture.client.modificationDate,
                 dateDecheance: [facture.dateDecheance],
-                facturePdf: [facture.paiment_PDF]
+                facturePdf: [facture.paiment_PDF],
+                invoiceId: facture.invoice_id
             }
         })
+        // Check and update the status of each facture
+        for (const facture of data) {
+            const { invoiceId } = facture;
+            if (invoiceId) {
+                try {
+                    const res = await stripe.invoices.retrieve(invoiceId);
+                    if (res) {
+                        const isPaid = res.status === 'paid';
+                        const isWaiting = res.status === 'open';
+                        const isNotPaid = facture.dateDecheance[0] < new Date();
+                        if (isPaid) {
+                            await db.factures.update({
+                                where: { id: facture.id },
+                                include: { client: true },
+                                data: {
+                                    client: {
+                                        update: { paimentStatus: 'PAID' }
+                                    }
+                                }
+                            });
+                        } else if (isWaiting) {
+                            await db.factures.update({
+                                where: { id: facture.id },
+                                include: { client: true },
+                                data: { client: { update: { paimentStatus: 'WAITING' } } }
 
-        console.log('Fetched Factures:', factures)
+                            });
+                        } else if (isNotPaid) {
+                            await db.factures.update({
+                                where: { id: facture.id },
+                                include: { client: true },
+                                data: { client: { update: { paimentStatus: 'NOT_PAID' } } }
+                            });
+                        }
 
-        return data
+                    }
+                } catch (error) {
+                    console.error(`Error checking invoice status for facture ID ${facture.id}:`, error);
+                }
+            }
+        }
+
+        return data;
     } catch (error) {
         console.error(error)
         return { success: false, message: 'Error sharing data', error }
@@ -398,11 +449,31 @@ export async function getStatistics() {
         if (!isUser) {
             throw new Error("Unauthorized");
         }
+        let data;
+        if (isUser.role === 'user') {
+             data = await db.clients.groupBy({
+                by: ['status'],
+                _count: {
+                    status: true
+                },
+                where: {
+                    userId: isUser.id
+                }
+            });
+        } else {
+             data = await db.clients.groupBy({
+                by: ['status'],
+                _count: {
+                    status: true
+                }
+            });
+        }
 
-        const data = await db.clients.groupBy({
-            by: ['status'],
-            _count: {
-                status: true
+
+        const AllClients = await db.clients.findMany({
+            select: {
+                montant: true,
+                paimentStatus: true
             }
         });
         const Cards = [
@@ -421,17 +492,40 @@ export async function getStatistics() {
 
         const datas = Cards.map((card) => {
             const countData = data.find((d) => d.status === card.status);
+            const total = AllClients.length;
+
+            if (card.status === "MONTHLY_PRODUCTION") {
+                const monthlyProduction = AllClients.reduce((acc, client) => {
+                    if (client.montant && client.paimentStatus === "PAID") {
+                        return acc + client.montant;
+                    }
+                    return acc;
+                }, 0);
+                return {
+                    name: card.name,
+                    value: monthlyProduction,
+                    status: card.status
+                };
+            }
+
+            if (card.status === "TOTAL") {
+                return {
+                    name: card.name,
+                    value: total,
+                    status: card.status
+                };
+            }
             return {
                 name: card.name,
-                value: countData ? countData._count.status : 0
-                , status: card.status
+                value: countData ? countData._count.status : 0,
+                status: card.status
             };
         });
-
-         return datas;
+        await db.$disconnect();
+        return datas;
     } catch (error) {
         console.error(error);
-     }
+    }
 }
 
 

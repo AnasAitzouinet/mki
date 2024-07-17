@@ -18,7 +18,7 @@ import SkeletonDisplay from "@/components/Dashboard/SkeletonDisplay";
 import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@/components/ui/DatePicker";
 
-function parseDateString(dateString: string): Date {
+export function parseDateString(dateString: string): Date {
     const parts = dateString.split(/[/ :]/)
     return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T${parts[3]}:${parts[4]}`)
 }
@@ -61,7 +61,7 @@ export default function DemoPage() {
             });
             console.log(filteredData);
             setData(filteredData);
-            
+
         }
     }, [date]);
 
@@ -122,7 +122,7 @@ export default function DemoPage() {
                                     </SelectContent>
                                 </Select>
                                 {
-                                    user || date && (
+                                    (
                                         <Button onClick={handleReset} variant="secondary">Reset</Button>
                                     )
                                 }

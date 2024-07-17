@@ -58,7 +58,6 @@ const Cards = [
 ]
 export default async function Dashboard() {
   const getdata = await getStatistics()
-  console.log(getdata)
 
   return (
     <main className="my-auto">
@@ -74,7 +73,9 @@ export default async function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {card.value}
+                  {card.value} {
+                    card.name === "Production mensuelle" ? "€" : ""
+                  }
                 </div>
               </CardContent>
             </Card>
