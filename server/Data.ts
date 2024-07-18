@@ -532,7 +532,7 @@ export async function CreateFacturesEnMass(clientData: { id: string, name: strin
     const dueDate = new Date(dateDecheance);
     const currentDate = new Date();
     const diffInDays = Math.ceil((dueDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
-    const apiUrl = 'http://localhost:3000'; // Make sure to set this environment variable
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     const session = await getSession()
 
     if (!session || !session.userId) {
