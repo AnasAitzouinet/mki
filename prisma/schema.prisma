@@ -55,7 +55,7 @@ model Factures {
 
   paiment_Link String?
   paiment_PDF  String?
-  invoice_id   String?
+  invoice_id   String? @unique
 
   client    Clients  @relation(fields: [clientId], references: [id], name: "ClientFactures")
   clientId  String

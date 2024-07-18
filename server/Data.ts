@@ -384,46 +384,46 @@ export async function getFactures() {
             }
         })
         // Check and update the status of each facture
-        for (const facture of data) {
-            const { invoiceId } = facture;
-            if (invoiceId) {
-                try {
-                    const res = await stripe.invoices.retrieve(invoiceId);
-                    if (res) {
-                        const isPaid = res.status === 'paid';
-                        const isWaiting = res.status === 'open';
-                        const isNotPaid = facture.dateDecheance[0] < new Date();
-                        if (isPaid) {
-                            await db.factures.update({
-                                where: { id: facture.id },
-                                include: { client: true },
-                                data: {
-                                    client: {
-                                        update: { paimentStatus: 'PAID' }
-                                    }
-                                }
-                            });
-                        } else if (isWaiting) {
-                            await db.factures.update({
-                                where: { id: facture.id },
-                                include: { client: true },
-                                data: { client: { update: { paimentStatus: 'WAITING' } } }
+        // for (const facture of data) {
+        //     const { invoiceId } = facture;
+        //     if (invoiceId) {
+        //         try {
+        //             const res = await stripe.invoices.retrieve(invoiceId);
+        //             if (res) {
+        //                 const isPaid = res.status === 'paid';
+        //                 const isWaiting = res.status === 'open';
+        //                 const isNotPaid = facture.dateDecheance[0] < new Date();
+        //                 if (isPaid) {
+        //                     await db.factures.update({
+        //                         where: { id: facture.id },
+        //                         include: { client: true },
+        //                         data: {
+        //                             client: {
+        //                                 update: { paimentStatus: 'PAID' }
+        //                             }
+        //                         }
+        //                     });
+        //                 } else if (isWaiting) {
+        //                     await db.factures.update({
+        //                         where: { id: facture.id },
+        //                         include: { client: true },
+        //                         data: { client: { update: { paimentStatus: 'WAITING' } } }
 
-                            });
-                        } else if (isNotPaid) {
-                            await db.factures.update({
-                                where: { id: facture.id },
-                                include: { client: true },
-                                data: { client: { update: { paimentStatus: 'NOT_PAID' } } }
-                            });
-                        }
+        //                     });
+        //                 } else if (isNotPaid) {
+        //                     await db.factures.update({
+        //                         where: { id: facture.id },
+        //                         include: { client: true },
+        //                         data: { client: { update: { paimentStatus: 'NOT_PAID' } } }
+        //                     });
+        //                 }
 
-                    }
-                } catch (error) {
-                    console.error(`Error checking invoice status for facture ID ${facture.id}:`, error);
-                }
-            }
-        }
+        //             }
+        //         } catch (error) {
+        //             console.error(`Error checking invoice status for facture ID ${facture.id}:`, error);
+        //         }
+        //     }
+        // }
 
         return data;
     } catch (error) {
