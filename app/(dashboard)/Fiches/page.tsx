@@ -17,11 +17,7 @@ import { IsAdmin } from "@/server/Auth";
 import SkeletonDisplay from "@/components/Dashboard/SkeletonDisplay";
 import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@/components/ui/DatePicker";
-
-export function parseDateString(dateString: string): Date {
-    const parts = dateString.split(/[/ :]/)
-    return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T${parts[3]}:${parts[4]}`)
-}
+import { parseDateString } from "@/lib/utils";
 
 
 export default function DemoPage() {

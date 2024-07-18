@@ -18,6 +18,11 @@ export function formatDate(
 }
  
 
+export function parseDateString(dateString: string): Date {
+  const parts = dateString.split(/[/ :]/)
+  return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T${parts[3]}:${parts[4]}`)
+}
+
 /**
  * Stole this from the @radix-ui/primitive
  * @see https://github.com/radix-ui/primitives/blob/main/packages/core/primitive/src/primitive.tsx

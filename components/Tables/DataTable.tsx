@@ -39,7 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ExternalLinkIcon, Import, User, X } from "lucide-react"
+import { ExternalLinkIcon, Import, ReceiptEuro, User, X } from "lucide-react"
 import { set } from "react-hook-form"
 import { DatePickerWithRange } from "../ui/DatePicker"
 
@@ -59,12 +59,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import ImportCsv from "./ImportCsv"
-import { deleteAllDatas, deleteData, editStatusMass, getUsers, ShareClients } from "@/server/Data"
+import { CreateFacturesEnMass, deleteAllDatas, deleteData, editStatusMass, getUsers, ShareClients } from "@/server/Data"
 import { useRouter } from "next/navigation"
 import { Status, User as Users } from "@prisma/client"
 import { IsAdmin } from "@/server/Auth"
 import { DateRange } from "react-day-picker"
 import { addDays } from "date-fns"
+import NewFacutres from "../Dashboard/NewFacutresMass"
 
 
 const statusName = [
@@ -296,55 +297,59 @@ export function DataTable<TData extends { id: string }, TValue>({
           </div>
 
           <div className="gap-3 flex flex-row-reverse justify-center items-center">
-            <Button
-              variant="outline"
-              className="flex items-center space-x-2"
-              onClick={handleExportCSV}
 
-            >
-              <span>Export All</span>
-              <ExternalLinkIcon />
-            </Button>
             {
               isAdmin && (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      className="flex items-center space-x-2"
-                      variant="destructive"
-                    >
-                      <span>Delete All</span>
-                      <X />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader className="space-y-4">
-                      <DialogTitle>Are you absolutely sure?</DialogTitle>
-                      <DialogDescription>
-                        This action cannot be undone. This will permanently delete your data from our servers.
+                <>
+                  <Button
+                    variant="outline"
+                    className="flex items-center space-x-2"
+                    onClick={handleExportCSV}
 
-                      </DialogDescription>
-                      <DialogClose className="w-full">
-                        <Button
-                          className="flex items-center w-full space-x-2"
-                          variant="destructive"
-                          onClick={async () => {
-                            await deleteAllDatas()
-                            router.refresh()
-                          }}
-                        >
-                          <span>Delete All</span>
-                        </Button>
-                      </DialogClose>
-                    </DialogHeader>
-                  </DialogContent>
-                </Dialog>
+                  >
+                    <span>Export All</span>
+                    <ExternalLinkIcon />
+                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        className="flex items-center space-x-2"
+                        variant="destructive"
+                      >
+                        <span>Delete All</span>
+                        <X />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader className="space-y-4">
+                        <DialogTitle>Are you absolutely sure?</DialogTitle>
+                        <DialogDescription>
+                          This action cannot be undone. This will permanently delete your data from our servers.
+
+                        </DialogDescription>
+                        <DialogClose className="w-full">
+                          <Button
+                            className="flex items-center w-full space-x-2"
+                            variant="destructive"
+                            onClick={async () => {
+                              await deleteAllDatas()
+                              router.refresh()
+                            }}
+                          >
+                            <span>Delete All</span>
+                          </Button>
+                        </DialogClose>
+                      </DialogHeader>
+                    </DialogContent>
+                  </Dialog>
+                  <div className="mb-2">
+                    <ImportCsv />
+                  </div>
+                </>
               )
             }
 
-            <div className="mb-2">
-              <ImportCsv />
-            </div>
+
             {
               rowSelection && Object.keys(rowSelection).length > 0 && (
                 <div className="flex gap-x-2">
@@ -363,21 +368,38 @@ export function DataTable<TData extends { id: string }, TValue>({
                     <span>Delete ({Object.keys(rowSelection).length})</span>
                     <X />
                   </Button>
-                  {/* <Button
-                    className="flex items-center space-x-2  bg-green-500  text-white hover:bg-green-600 hover:text-white 
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        className="flex items-center space-x-2  bg-green-500  text-white hover:bg-green-600 hover:text-white 
                  dark:bg-green-700  dark:hover:bg-green-900  
                 "
-                    variant="outline"
-                    onClick={() => {
-                      const selectedRows = table.getFilteredSelectedRowModel().rows
-                      console.log(selectedRows.map(row => row.original))
-                    }}
-                  >
-                    <span>Export ({Object.keys(rowSelection).length})
+                        variant="outline"
+                        onClick={async () => {
+                          const selectedRows = table.getFilteredSelectedRowModel().rows
+                          console.log(selectedRows.map(row => row.original))
+                          const client = selectedRows.map(row => row.original)
 
-                    </span>
-                    <ExternalLinkIcon />
-                  </Button> */}
+                        }}
+                      >
+                        <ReceiptEuro />
+                        <span>Facturer ({Object.keys(rowSelection).length})</span>
+
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Ajouter une facture</DialogTitle>
+                      </DialogHeader>
+                      <NewFacutres  clients={
+                        table.getFilteredSelectedRowModel().rows.map(row => row.original) as any
+                      } />
+                    </DialogContent>
+                    <DialogClose
+                      id='close-dialog'
+                    />
+                  </Dialog>
                 </div>
               )
             }

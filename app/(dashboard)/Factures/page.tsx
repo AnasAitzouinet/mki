@@ -19,8 +19,8 @@ import { getFactures } from '@/server/Data'
 import { useRouter } from 'next/navigation'
 import { Toaster } from '@/components/ui/toaster'
 import { DateRange } from 'react-day-picker'
-import { parseDateString } from '../Fiches/page'
-import { LoaderCircleIcon } from 'lucide-react'
+ import { LoaderCircleIcon } from 'lucide-react'
+import { parseDateString } from '@/lib/utils'
 
 
 interface FactureData {

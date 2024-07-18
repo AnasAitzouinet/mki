@@ -451,7 +451,7 @@ export async function getStatistics() {
         }
         let data;
         if (isUser.role === 'user') {
-             data = await db.clients.groupBy({
+            data = await db.clients.groupBy({
                 by: ['status'],
                 _count: {
                     status: true
@@ -461,7 +461,7 @@ export async function getStatistics() {
                 }
             });
         } else {
-             data = await db.clients.groupBy({
+            data = await db.clients.groupBy({
                 by: ['status'],
                 _count: {
                     status: true
@@ -521,11 +521,60 @@ export async function getStatistics() {
                 status: card.status
             };
         });
-        await db.$disconnect();
+         await db.$disconnect();
         return datas;
     } catch (error) {
         console.error(error);
     }
 }
 
+export async function CreateFacturesEnMass(clientData: { id: string, name: string  | null, email: string | null }[], montant: number, dateDecheance: Date) {
+    const dueDate = new Date(dateDecheance);
+    const currentDate = new Date();
+    const diffInDays = Math.ceil((dueDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+    const apiUrl = 'http://localhost:3000'; // Make sure to set this environment variable
+    const session = await getSession()
+
+    if (!session || !session.userId) {
+        throw new Error("Unauthorized")
+    }
+    const requests = clientData.map(async({ id, name, email }) =>
+       await fetch(`${apiUrl}/api/stripe/invoice/generateLink`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                clientId: id,
+                montant,
+                dateDecheanceDays: diffInDays,
+                dateDecheance,
+                ProductPrice: montant,
+                CustomerName: name,
+                ProductName: "Facture",
+                CustomerEmail: email,
+                sessions: session
+            })
+        })
+    );
+
+    try {
+        const results = await Promise.all(requests);
+        const errors = results.filter(res => !res.ok);
+
+        if (errors.length > 0) {
+            return { 
+                success: false, 
+                message: 'Some factures failed to create', 
+                errors: errors.map(e => ({ status: e.status, statusText: e.statusText }))
+            };
+        }
+
+        return { success: true, message: 'Factures created successfully' };
+    } catch (error) {
+        console.error(error);
+        return { success: false, message: 'Error creating factures', error };
+    }
+}
 

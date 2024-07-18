@@ -4,15 +4,30 @@ import stripe from "@/lib/stripe";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-    const session = await getSession();
-    if (!session || !session.userId) {
-        return new NextResponse("Unauthorized", { status: 401 });
+    let requestData;
+    try {
+        requestData = await req.json();
+    } catch (error) {
+        console.error("Error parsing request JSON:", error);
+        return new NextResponse("Bad Request", { status: 400 });
+    }
+
+    let { sessions } = requestData;
+ 
+    if (!sessions) {
+        sessions = await getSession();
+        console.log(sessions);
+        if (!sessions || !sessions.userId) {
+            console.error("No session found");
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
     }
 
     const user = await db.user.findFirst({
-        where: { id: session.userId }
+        where: { id: sessions.userId }
     });
     if (!user) {
+        console.error("User not foundsss");
         return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -26,7 +41,7 @@ export async function POST(req: Request) {
             dateDecheanceDays,
             dateDecheance,
             description
-        } = await req.json();
+        } = requestData;
 
         const unitAmount = parseInt(ProductPrice) * 100;
 

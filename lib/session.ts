@@ -45,7 +45,6 @@ export async function createSession(userId: string, role?: string) {
 export async function getSession() {
     const session = cookies().get('session')
     if (!session) return
-
     return await decrypt(session.value)
 }
 
