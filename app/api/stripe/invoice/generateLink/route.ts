@@ -16,7 +16,6 @@ export async function POST(req: Request) {
  
     if (!sessions) {
         sessions = await getSession();
-        console.log(sessions);
         if (!sessions || !sessions.userId) {
             console.error("No session found");
             return new NextResponse("Unauthorized", { status: 401 });

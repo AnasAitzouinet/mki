@@ -8,23 +8,23 @@ import { Button } from "@/components/ui/button"
 import {
     Form,
     FormControl,
-     FormField,
+    FormField,
     FormItem,
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
- 
+
 import { Link, CalendarIcon } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { cn } from "@/lib/utils"
 import { format, set } from "date-fns"
 import { Calendar } from "../ui/calendar"
 import { Textarea } from "../ui/textarea"
-import {   useState } from "react"
-import { CreateFacturesEnMass    } from "@/server/Data"
+import { useState } from "react"
+import { CreateFacturesEnMass } from "@/server/Data"
 import { Clients } from "@prisma/client"
- 
+
 import { useToast } from "../ui/use-toast"
 
 const formSchema = z.object({
@@ -64,8 +64,9 @@ export default function NewFacutres({
 
         const { dateDecheance, montant } = validated.data
 
+
         try {
-            setLoading(true)
+            setLoading(true);
             if (clients.length === 0) {
                 toast({
                     title: "No clients selected",
@@ -76,36 +77,58 @@ export default function NewFacutres({
             const clientData = clients.map(client => ({
                 id: client.id,
                 name: client.full_name,
-                email: client.email
+                email: client.email,
             }));
 
-            const res = await CreateFacturesEnMass(
-                clientData,
-                parseFloat(montant),
-                dateDecheance
-            )
+            const dueDate = new Date(dateDecheance);
+            const currentDate = new Date();
+            const diffInDays = Math.ceil((dueDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
 
-            if (res.success) {
-                console.log(res)
-                toast({
-                    title: "Success",
-                    description: res.message,
-                });
-            } else {
-                console.log(res)
+            const requests = clientData.map(async ({ id, name, email }) =>
+                fetch(`/api/stripe/invoice/generateLink`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        clientId: id,
+                        montant,
+                        dateDecheanceDays: diffInDays,
+                        dateDecheance,
+                        ProductPrice: montant,
+                        CustomerName: name,
+                        ProductName: "Facture",
+                        CustomerEmail: email,
+                    }),
+                })
+            );
 
+            const results = await Promise.all(requests);
+            const errors = results.filter(res => !res.ok);
+            console.log(errors);
+            if (errors.length > 0) {
                 toast({
                     title: "Error",
-                    description: res.message,
+                    description: 'Some factures failed to create',
                 });
+                return;
             }
+
+            // const successResults = await Promise.all(results.map(res => res.json()));
+
+             toast({
+                title: "Factures created",
+                description: "Factures created successfully",
+            });
         } catch (error) {
-            console.error("Failed to create new facture", error)
+            console.log("Failed to create new facture", error);
             toast({
-                title: "Error creating new facture",
+                title: "Error",
+                description: "Failed to create new facture",
             });
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
     };
 
