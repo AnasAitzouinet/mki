@@ -1,8 +1,6 @@
 "use server";
-import { Leads } from "@/components/Tables/Columns/Column";
 import db from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import stripe from "@/lib/stripe";
 import { CsvFileImportSchema } from "@/schemas";
 import { Clients, Status, User } from "@prisma/client";
 import * as z from "zod";
@@ -521,14 +519,14 @@ export async function getStatistics() {
                 status: card.status
             };
         });
-         await db.$disconnect();
+        await db.$disconnect();
         return datas;
     } catch (error) {
         console.error(error);
     }
 }
 
-export async function CreateFacturesEnMass(clientData: { id: string, name: string  | null, email: string | null }[], montant: number, dateDecheance: Date) {
+export async function CreateFacturesEnMass(clientData: { id: string, name: string | null, email: string | null }[], montant: number, dateDecheance: Date) {
     const dueDate = new Date(dateDecheance);
     const currentDate = new Date();
     const diffInDays = Math.ceil((dueDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -538,8 +536,8 @@ export async function CreateFacturesEnMass(clientData: { id: string, name: strin
     if (!session || !session.userId) {
         throw new Error("Unauthorized")
     }
-    const requests = clientData.map(async({ id, name, email }) =>
-       await fetch(`${apiUrl}/api/stripe/invoice/generateLink`, {
+    const requests = clientData.map(async ({ id, name, email }) =>
+        await fetch(`${apiUrl}/api/stripe/invoice/generateLink`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -564,9 +562,9 @@ export async function CreateFacturesEnMass(clientData: { id: string, name: strin
         const errors = results.filter(res => !res.ok);
 
         if (errors.length > 0) {
-            return { 
-                success: false, 
-                message: 'Some factures failed to create', 
+            return {
+                success: false,
+                message: 'Some factures failed to create',
                 errors: errors.map(e => ({ status: e.status, statusText: e.statusText }))
             };
         }
@@ -578,3 +576,65 @@ export async function CreateFacturesEnMass(clientData: { id: string, name: strin
     }
 }
 
+
+
+export async function GetFichItem(id: string) {
+    const session = await getSession();
+
+    if (!session || !session.userId) {
+        throw new Error("Unauthorized");
+    }
+
+    try {
+        const data = await db.clients.findFirst({
+            where: {
+                id: id
+            }
+        });
+        return data;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+
+export async function UpdateFichItem(
+    id: string,
+    data: Partial<Clients>
+): Promise<{
+    success: boolean;
+    message: string;
+    data?: Clients;
+    error?: any;
+}> {
+    const session = await getSession();
+
+    if (!session || !session.userId) {
+        return {
+            success: false,
+            message: 'Unauthorized',
+        };
+    }
+
+    try {
+        const updatedData = await db.clients.update({
+            where: { id },
+            data: {
+                ...data,
+                updatedAt: new Date(), // Ensure updatedAt is set to current time
+            },
+        });
+        return {
+            success: true,
+            message: 'Data updated successfully',
+            data: updatedData,
+        };
+    } catch (error) {
+        console.error('Error updating data:', error);
+        return {
+            success: false,
+            message: 'Error updating data',
+            error,
+        };
+    }
+}

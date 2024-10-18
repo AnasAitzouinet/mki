@@ -16,50 +16,51 @@ import { ArrowUpDown } from "lucide-react"
 import { Clients, PaimentStatus, Status } from "@prisma/client"
 import { editStatus } from "@/server/Data"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 type StatusName = {
     name: string
     value: Status
 }[]
 
-export const statusName : StatusName = [
+export const statusName: StatusName = [
     {
-      name: "LEADS",
-      value: "LEADS"
+        name: "LEADS",
+        value: "LEADS"
     },
     {
-      name: "NRP",
-      value: "NRP"
+        name: "NRP",
+        value: "NRP"
     },
     {
-      name: "A Rappler (mail) ",
-      value: "MAIL_RELANCE_MAIL"
+        name: "A Rappler (mail) ",
+        value: "MAIL_RELANCE_MAIL"
     },
     {
-      name: "A Rappler (tel)",
-      value: "MAIL_RELANCE_TEL"
+        name: "A Rappler (tel)",
+        value: "MAIL_RELANCE_TEL"
     },
     {
-      name: "annuler",
-      value: "ANNULER"
+        name: "annuler",
+        value: "ANNULER"
     },
     {
-      name: "En attente de justification",
-      value: "WAITING_FOR_JUSTIFICATION"
+        name: "En attente de justification",
+        value: "WAITING_FOR_JUSTIFICATION"
     },
     {
-      name: "En attente de paiement",
-      value: "WAITING_FOR_PAYMENT"
+        name: "En attente de paiement",
+        value: "WAITING_FOR_PAYMENT"
     },
     {
-      name: "A rappeler",
-      value: "TO_BE_RECALLED"
+        name: "A rappeler",
+        value: "TO_BE_RECALLED"
     },
     {
-      name: "Validé",
-      value: "VALIDATED"
+        name: "Validé",
+        value: "VALIDATED"
     }
-  ]
+]
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
 export type Leads = {
@@ -104,14 +105,7 @@ export const columns: ColumnDef<Clients>[] = [
         enableSorting: false,
         enableHiding: false,
     },
-    {
-        accessorKey: "id",
-        header: "id",
-        cell: ({ row }) => {
-            const id = row.original.id
-            return <span>{id.slice(2, 9) + '...'}</span>
-        }
-    },
+
     {
         accessorKey: "status",
         header: "Status",
@@ -205,6 +199,19 @@ export const columns: ColumnDef<Clients>[] = [
         }
     },
     {
+        accessorKey: "id",
+        header: "edit",
+        cell: ({ row }) => {
+            const id = row.original.id
+            return <Button
+                variant="outline"
+                className="rounded-full"
+            >
+                <Link href={`/Fiches/${id}`}>Edit</Link>
+            </Button>
+        }
+    },
+    {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => {
@@ -215,7 +222,7 @@ export const columns: ColumnDef<Clients>[] = [
     },
 ]
 
-const Actions = ({ row }:any) => {
+const Actions = ({ row }: any) => {
     const id = row.original.id
     const router = useRouter()
     return (
